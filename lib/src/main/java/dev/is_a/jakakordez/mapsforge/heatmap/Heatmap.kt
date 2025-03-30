@@ -4,6 +4,18 @@ import android.graphics.Bitmap
 import org.mapsforge.core.model.Tile
 import kotlin.math.pow
 
+/**
+ * Heatmap class represents a single heatmap with all layers representing different levels of
+ * detail. The levels included in a heatmap depend on the settings used when building it and
+ * distribution of included coordinate points.
+ *
+ * The heatmap is structured as a 2d tree with each
+ * node covering exactly one Mapsforge tile, identified by a org.mapsforge.core.model.Tile object.
+ * The root of the tree is the largest node (tile with lowest zoom level) which covers all
+ * contained coordinate points. Children of a node for tile X are nodes which belong to the tiles
+ * that are children of the tile X (their zoom level = zoom level of X + 1). The lowest layer of
+ * nodes is defined when heatmap is built using HeatmapBuilder.
+ */
 class Heatmap(private val rootLayer: HeatmapNode, private val levelResolution: Byte) {
     private val tileChildren = 2f.pow(levelResolution.toInt()).toInt()
 

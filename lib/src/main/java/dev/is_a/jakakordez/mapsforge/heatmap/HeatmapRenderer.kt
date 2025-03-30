@@ -31,13 +31,33 @@ class HeatmapRenderer(
     null
 ) {
     data class Options(
+        /**
+         * Radius of the blur filter used when rendering the heatmap
+         */
         val blurRadius: Float = 16f,
+        /**
+         * Minimal number of points to determine the color of a point. Values less than minValue
+         * will be painted using minColor.
+         */
         val minValue: Int = 1,
+        /**
+         * Maximal number of points to determine the color of a point. Values more than maxValue
+         * will be painted using maxColor.
+         */
         val maxValue: Int = 10,
+        /**
+         * Color of the smallest number of points.
+         */
         @ColorInt
         val minColor: Int = Color.GREEN,
+        /**
+         * Color of the largest number of points.
+         */
         @ColorInt
         val maxColor: Int = Color.RED,
+        /**
+         * Color of pixels where there are no points.
+         */
         @ColorInt
         val zeroColor: Int = Color.TRANSPARENT)
 
@@ -63,6 +83,10 @@ class HeatmapRenderer(
     override fun executeJob(job: RendererJob?): TileBitmap {
         val tile = job!!.tile
         val grid = heatmap.get9Grid()
+
+        if (options.zeroColor != Color.TRANSPARENT) {
+            grid.eraseColor(options.zeroColor)
+        }
 
         heatmap.generateBitmap(grid, calculateColor, 0, 0, tile.aboveLeft)
         heatmap.generateBitmap(grid, calculateColor, 1, 0, tile.above)
