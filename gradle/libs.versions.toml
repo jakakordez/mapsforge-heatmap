@@ -12,6 +12,8 @@ appcompat = "1.7.0"
 material = "1.12.0"
 
 [libraries]
+mapsforge = { group = "org.mapsforge", name = "mapsforge-map-android", version = "0.23.0" }
+caverock = { group = "com.caverock", name = "androidsvg", version = "1.4" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

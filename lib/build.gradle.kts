@@ -33,7 +33,8 @@ android {
 }
 
 dependencies {
-
+    implementation(libs.mapsforge)
+    implementation(libs.caverock)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
