@@ -87,7 +87,7 @@ class HeatmapBuilder(private val options: Options) {
 
     private fun buildPyramid(bottomLayer: HashMap<Tile, Long>) : HeatmapNode {
         var nodes = bottomLayer.map { HeatmapNode(it.value, it.key, listOf()) }
-        while(nodes.size > 1 || nodes.first().tileId.zoomLevel > options.minHeatmapZoom) {
+        while(nodes.size > 1 || nodes.first().tile.zoomLevel > options.minHeatmapZoom) {
             nodes = buildLayer(nodes)
         }
         return nodes.first()
@@ -97,7 +97,7 @@ class HeatmapBuilder(private val options: Options) {
     {
         val upperLayer = HashMap<Tile, MutableList<HeatmapNode>>()
         for (heatmapNode in layer) {
-            val parentId = heatmapNode.tileId.parent
+            val parentId = heatmapNode.tile.parent
             val list = upperLayer.getOrDefault(parentId, mutableListOf())
             list.add(heatmapNode)
             upperLayer[parentId] = list

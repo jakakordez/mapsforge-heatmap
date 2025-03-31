@@ -1,11 +1,16 @@
 package dev.is_a.jakakordez.mapsforge.heatmap.demo
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import dev.is_a.jakakordez.mapsforge.heatmap.Heatmap
 import dev.is_a.jakakordez.mapsforge.heatmap.HeatmapBuilder
 import dev.is_a.jakakordez.mapsforge.heatmap.HeatmapRenderer
 import dev.is_a.jakakordez.mapsforge.heatmap.HeatmapTileLayer
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.json.Json
 import org.mapsforge.core.model.LatLong
 import org.mapsforge.map.android.graphics.AndroidGraphicFactory
 import org.mapsforge.map.android.util.AndroidUtil
@@ -22,6 +27,7 @@ import kotlin.random.Random
 class MainActivity : ComponentActivity() {
     private lateinit var map: MapView;
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main_activity)
@@ -47,6 +53,11 @@ class MainActivity : ComponentActivity() {
             HeatmapRenderer.Options())
 
         map.layerManager.layers.add(heatmapLayer)
+
+
+        val json = Json.encodeToString(heatmap)
+        val cbor = Cbor.encodeToByteArray(heatmap)
+        Log.i("Heatmap", "Heatmap serialized: JSON ${json.length} bytes, CBOR: ${cbor.size} bytes")
     }
 
     /**

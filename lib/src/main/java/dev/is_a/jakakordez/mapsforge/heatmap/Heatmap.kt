@@ -3,6 +3,7 @@ package dev.is_a.jakakordez.mapsforge.heatmap
 import android.graphics.Bitmap
 import org.mapsforge.core.model.Tile
 import kotlin.math.pow
+import kotlinx.serialization.Serializable
 
 /**
  * Heatmap class represents a single heatmap with all layers representing different levels of
@@ -16,6 +17,7 @@ import kotlin.math.pow
  * that are children of the tile X (their zoom level = zoom level of X + 1). The lowest layer of
  * nodes is defined when heatmap is built using HeatmapBuilder.
  */
+@Serializable
 class Heatmap(private val rootLayer: HeatmapNode, private val levelResolution: Byte) {
     private val tileChildren = 2f.pow(levelResolution.toInt()).toInt()
 
@@ -39,17 +41,17 @@ class Heatmap(private val rootLayer: HeatmapNode, private val levelResolution: B
 
     private fun fillRecursive(layer: HeatmapNode, tile: Tile, bmp: Bitmap,
                               calculateColor: (Long) -> Int, offsetX: Int, offsetY: Int) {
-        if (!areTilesRelated(tile, layer.tileId)) {
+        if (!areTilesRelated(tile, layer.tile)) {
             return
         }
-        if (tile.zoomLevel + levelResolution > layer.tileId.zoomLevel) {
+        if (tile.zoomLevel + levelResolution > layer.tile.zoomLevel) {
             for (child in layer.children) {
                 fillRecursive(child, tile, bmp, calculateColor, offsetX, offsetY)
             }
         }
         else {
-            val x = layer.tileId.tileX - (tile.tileX * tileChildren)
-            val y = layer.tileId.tileY - (tile.tileY * tileChildren)
+            val x = layer.tile.tileX - (tile.tileX * tileChildren)
+            val y = layer.tile.tileY - (tile.tileY * tileChildren)
             if (x in 0 ..< tileChildren && y in 0 ..< tileChildren) {
                 bmp.setPixel(x + offsetX, y + offsetY, calculateColor(layer.count))
             }
