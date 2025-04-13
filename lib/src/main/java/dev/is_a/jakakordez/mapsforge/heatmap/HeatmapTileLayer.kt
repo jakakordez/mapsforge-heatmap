@@ -15,7 +15,8 @@ import org.mapsforge.map.rendertheme.rule.RenderThemeFuture
 
 class HeatmapTileLayer(
     tileCache: TileCache, private val mapDataStore: MapDataStore, mapViewPosition: MapViewPosition?,
-    private val graphicFactory: GraphicFactory, heatmap: Heatmap, options: HeatmapRenderer.Options
+    private val graphicFactory: GraphicFactory, heatmaps: Set<Heatmap>,
+    options: HeatmapRenderer.Options
 ) :
     TileLayer<RendererJob>(
         tileCache,
@@ -28,7 +29,7 @@ class HeatmapTileLayer(
         this.mapDataStore,
         graphicFactory,
         tileCache,
-        heatmap,
+        heatmaps,
         options
     )
     private var mapWorkerPool: MapWorkerPool? = null

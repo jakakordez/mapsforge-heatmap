@@ -25,7 +25,10 @@ import java.io.FileOutputStream
 import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
-    private lateinit var map: MapView;
+    private lateinit var map: MapView
+
+    private lateinit var heatmapLayer: HeatmapTileLayer
+    private val heatmaps = mutableSetOf<Heatmap>()
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,7 +39,7 @@ class MainActivity : ComponentActivity() {
 
         initializeMap()
 
-        val heatmap = buildHeatmap()
+        heatmaps.add(buildHeatmap())
 
         val heatmapCache = AndroidUtil.createTileCache(baseContext,
             "heatmapCache",
@@ -44,19 +47,18 @@ class MainActivity : ComponentActivity() {
             1f,
             map.model.frameBufferModel.overdrawFactor)
 
-        val heatmapLayer = HeatmapTileLayer(
+        heatmapLayer = HeatmapTileLayer(
             heatmapCache,
             MultiMapDataStore(),
             map.model.mapViewPosition,
             AndroidGraphicFactory.INSTANCE,
-            heatmap,
+            heatmaps,
             HeatmapRenderer.Options())
 
         map.layerManager.layers.add(heatmapLayer)
 
-
-        val json = Json.encodeToString(heatmap)
-        val cbor = Cbor.encodeToByteArray(heatmap)
+        val json = Json.encodeToString(heatmaps)
+        val cbor = Cbor.encodeToByteArray(heatmaps)
         Log.i("Heatmap", "Heatmap serialized: JSON ${json.length} bytes, CBOR: ${cbor.size} bytes")
     }
 

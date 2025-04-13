@@ -7,19 +7,24 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
+import android.util.Log
 import androidx.annotation.ColorInt
 import org.mapsforge.core.graphics.GraphicFactory
 import org.mapsforge.core.graphics.TileBitmap
+import org.mapsforge.core.model.Tile
 import org.mapsforge.map.datastore.MapDataStore
 import org.mapsforge.map.layer.cache.TileCache
 import org.mapsforge.map.layer.renderer.DatabaseRenderer
 import org.mapsforge.map.layer.renderer.RendererJob
+import kotlin.math.pow
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.set
 
 class HeatmapRenderer(
     mapDataStore: MapDataStore?,
     graphicFactory: GraphicFactory?,
     tileCache: TileCache?,
-    private val heatmap: Heatmap,
+    private val heatmaps: Set<Heatmap>,
     private val options: Options
 ) : DatabaseRenderer(
     mapDataStore,
@@ -31,10 +36,7 @@ class HeatmapRenderer(
     null
 ) {
     data class Options(
-        /**
-         * Radius of the blur filter used when rendering the heatmap
-         */
-        val blurRadius: Float = 16f,
+        val levelResolution: Byte = 3,
         /**
          * Minimal number of points to determine the color of a point. Values less than minValue
          * will be painted using minColor.
@@ -65,9 +67,8 @@ class HeatmapRenderer(
         isAntiAlias = true
         isFilterBitmap = true
         isDither = true
-        maskFilter = BlurMaskFilter(options.blurRadius, BlurMaskFilter.Blur.NORMAL)
     }
-
+    private val tileChildren = 2f.pow(options.levelResolution.toInt()).toInt()
     private val normalPaint = Paint()
     private val rgbEvaluator = ArgbEvaluator()
 
@@ -82,37 +83,19 @@ class HeatmapRenderer(
 
     override fun executeJob(job: RendererJob?): TileBitmap {
         val tile = job!!.tile
-        val grid = heatmap.get9Grid()
+        val tileSize = tile.tileSize
 
-        if (options.zeroColor != Color.TRANSPARENT) {
-            grid.eraseColor(options.zeroColor)
-        }
+        val height = if (tile.tileY == 0) 2 else 3
 
-        heatmap.generateBitmap(grid, calculateColor, 0, 0, tile.aboveLeft)
-        heatmap.generateBitmap(grid, calculateColor, 1, 0, tile.above)
-        heatmap.generateBitmap(grid, calculateColor, 2, 0, tile.aboveRight)
-        heatmap.generateBitmap(grid, calculateColor, 0, 1, tile.left)
-        heatmap.generateBitmap(grid, calculateColor, 1, 1, tile)
-        heatmap.generateBitmap(grid, calculateColor, 2, 1, tile.right)
-        heatmap.generateBitmap(grid, calculateColor, 0, 2, tile.belowLeft)
-        heatmap.generateBitmap(grid, calculateColor, 1, 2, tile.below)
-        heatmap.generateBitmap(grid, calculateColor, 2, 2, tile.belowRight)
+        val grid = generateGrid(tile, height)
+        val gridBitmap = gridToBitmap(grid, height)
+        val blurredGrid = blurGrid(gridBitmap, tileSize, height)
 
-        val blurredGrid = Bitmap.createBitmap(
-            tile.tileSize * 3,
-            tile.tileSize * 3,
-            Bitmap.Config.ARGB_8888)
-        val blurredCanvas = Canvas(blurredGrid)
-        blurredCanvas.drawBitmap(grid,
-            Rect(0, 0, grid.width, grid.height),
-            Rect(0, 0, blurredGrid.width, blurredGrid.height),
-            blurPaint)
-
-        val tileGrid = Bitmap.createBitmap(tile.tileSize, tile.tileSize, Bitmap.Config.ARGB_8888)
+        val tileGrid = createBitmap(tileSize, tileSize)
         val tileCanvas = Canvas(tileGrid)
         tileCanvas.drawBitmap(blurredGrid,
-            Rect(tile.tileSize, tile.tileSize, tile.tileSize * 2, tile.tileSize * 2),
-            Rect(0, 0, tile.tileSize, tile.tileSize),
+            Rect(tileSize, (height - 2) * tileSize, tileSize * 2, tileSize * (height - 1)),
+            Rect(0, 0, tileSize, tileSize),
             normalPaint)
 
         val output = HeatmapBitmap(tileGrid)
@@ -122,5 +105,46 @@ class HeatmapRenderer(
         }
 
         return output
+    }
+
+    private fun generateGrid(tile: Tile, height: Int) : Array<Array<Long>> {
+        val grid = Array(tileChildren * 3) { Array(tileChildren * height) { 0L } }
+
+        val corner = if (height == 2) tile.left else tile.aboveLeft
+        val cornerChild = Tile(
+            corner.tileX * tileChildren,
+            corner.tileY * tileChildren,
+            (corner.zoomLevel + options.levelResolution).toByte(),
+            corner.tileSize)
+
+        heatmaps.forEach {
+            it.fillGrid(grid, cornerChild)
+        }
+        return grid
+    }
+
+    private fun gridToBitmap(grid: Array<Array<Long>>, height: Int): Bitmap {
+        val gridBitmap = createBitmap(tileChildren * 3, tileChildren * height)
+
+        if (options.zeroColor != Color.TRANSPARENT) {
+            gridBitmap.eraseColor(options.zeroColor)
+        }
+
+        for (x in 0 ..< tileChildren * 3) {
+            for (y in 0 ..< tileChildren * height) {
+                gridBitmap[x, y] = calculateColor(grid[x][y])
+            }
+        }
+        return gridBitmap
+    }
+
+    private fun blurGrid(gridBitmap: Bitmap, tileSize: Int, height: Int): Bitmap {
+        val blurredGrid = createBitmap(tileSize * 3, tileSize * height)
+        val blurredCanvas = Canvas(blurredGrid)
+        blurredCanvas.drawBitmap(gridBitmap,
+            Rect(0, 0, gridBitmap.width, gridBitmap.height),
+            Rect(0, 0, blurredGrid.width, blurredGrid.height),
+            blurPaint)
+        return blurredGrid
     }
 }

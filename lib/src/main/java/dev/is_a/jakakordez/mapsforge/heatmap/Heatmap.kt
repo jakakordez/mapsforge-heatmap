@@ -1,6 +1,5 @@
 package dev.is_a.jakakordez.mapsforge.heatmap
 
-import android.graphics.Bitmap
 import org.mapsforge.core.model.Tile
 import kotlin.math.pow
 import kotlinx.serialization.Serializable
@@ -18,42 +17,28 @@ import kotlinx.serialization.Serializable
  * nodes is defined when heatmap is built using HeatmapBuilder.
  */
 @Serializable
-class Heatmap(private val rootLayer: HeatmapNode, private val levelResolution: Byte) {
-    private val tileChildren = 2f.pow(levelResolution.toInt()).toInt()
+class Heatmap(private val rootLayer: HeatmapNode) {
 
-    fun get9Grid(): Bitmap {
-        return Bitmap.createBitmap(
-            tileChildren * 3,
-            tileChildren * 3,
-            Bitmap.Config.ARGB_8888)
+    fun fillGrid(grid: Array<Array<Long>>, topLeft: Tile) {
+        fillRecursive(rootLayer, topLeft, grid)
     }
 
-    fun generateBitmap(bmp: Bitmap, calculateColor: (Long) -> Int, offsetX: Int,
-                       offsetY: Int, tile: Tile) {
-        fillRecursive(
-            rootLayer,
-            tile,
-            bmp,
-            calculateColor,
-            offsetX * tileChildren,
-            offsetY * tileChildren)
-    }
-
-    private fun fillRecursive(layer: HeatmapNode, tile: Tile, bmp: Bitmap,
-                              calculateColor: (Long) -> Int, offsetX: Int, offsetY: Int) {
-        if (!areTilesRelated(tile, layer.tile)) {
+    private fun fillRecursive(layer: HeatmapNode, topLeft: Tile, grid: Array<Array<Long>>) {
+        /*if (!areTilesRelated(tile, layer.tile)) {
             return
-        }
-        if (tile.zoomLevel + levelResolution > layer.tile.zoomLevel) {
+        }*/
+        if (topLeft.zoomLevel > layer.tile.zoomLevel) {
             for (child in layer.children) {
-                fillRecursive(child, tile, bmp, calculateColor, offsetX, offsetY)
+                fillRecursive(child, topLeft, grid)
             }
         }
         else {
-            val x = layer.tile.tileX - (tile.tileX * tileChildren)
-            val y = layer.tile.tileY - (tile.tileY * tileChildren)
-            if (x in 0 ..< tileChildren && y in 0 ..< tileChildren) {
-                bmp.setPixel(x + offsetX, y + offsetY, calculateColor(layer.count))
+            val zoom = layer.tile.zoomLevel
+            val max = Tile.getMaxTileNumber(zoom) + 1
+            val x = (max + layer.tile.tileX - topLeft.tileX) % max
+            val y = layer.tile.tileY - topLeft.tileY
+            if (x in 0 ..< grid.size && y in 0 ..< grid[0].size) {
+                grid[x][y] += layer.count
             }
         }
     }

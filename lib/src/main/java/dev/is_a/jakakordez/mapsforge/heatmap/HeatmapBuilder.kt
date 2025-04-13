@@ -76,7 +76,7 @@ class HeatmapBuilder(private val options: Options) {
      */
     fun build(): Heatmap {
         val topNode = buildPyramid(map)
-        return Heatmap(topNode, options.levelResolution)
+        return Heatmap(topNode)
     }
 
     private fun getTile(latLong: LatLong, zoomLevel: Byte): Tile {
