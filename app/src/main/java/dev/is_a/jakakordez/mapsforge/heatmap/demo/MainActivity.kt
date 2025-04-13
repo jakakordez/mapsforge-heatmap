@@ -1,7 +1,10 @@
 package dev.is_a.jakakordez.mapsforge.heatmap.demo
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import dev.is_a.jakakordez.mapsforge.heatmap.Heatmap
 import dev.is_a.jakakordez.mapsforge.heatmap.HeatmapBuilder
@@ -27,6 +30,7 @@ import kotlin.random.Random
 class MainActivity : ComponentActivity() {
     private lateinit var map: MapView
 
+    private var points = 0
     private lateinit var heatmapLayer: HeatmapTileLayer
     private val heatmaps = mutableSetOf<Heatmap>()
 
@@ -60,6 +64,8 @@ class MainActivity : ComponentActivity() {
         val json = Json.encodeToString(heatmaps)
         val cbor = Cbor.encodeToByteArray(heatmaps)
         Log.i("Heatmap", "Heatmap serialized: JSON ${json.length} bytes, CBOR: ${cbor.size} bytes")
+
+        initializeControls()
     }
 
     /**
@@ -75,6 +81,7 @@ class MainActivity : ComponentActivity() {
                 val lat = clusterLat + Random.nextDouble(-10.0, 10.0)
                 val lon = clusterLon + Random.nextDouble(-10.0, 10.0)
                 builder.feed(LatLong(lat, lon))
+                points++
             }
         }
         return builder.build()
@@ -112,5 +119,24 @@ class MainActivity : ComponentActivity() {
         map.setZoomLevel(2)
         map.setZoomLevelMin(2)
         map.setZoomLevelMax(12)
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun initializeControls() {
+        val txtStats: TextView = findViewById(R.id.txtStats)
+        txtStats.text = "Heatmaps: ${heatmaps.size}  Points: $points"
+
+        findViewById<Button>(R.id.btnGenerateHeatmap).setOnClickListener {
+            heatmaps.add(buildHeatmap())
+            heatmapLayer.heatmapChanged()
+            txtStats.text = "Heatmaps: ${heatmaps.size}  Points: $points"
+        }
+
+        findViewById<Button>(R.id.btnClear).setOnClickListener {
+            heatmaps.clear()
+            points = 0
+            heatmapLayer.heatmapChanged()
+            txtStats.text = "Heatmaps: ${heatmaps.size}  Points: $points"
+        }
     }
 }

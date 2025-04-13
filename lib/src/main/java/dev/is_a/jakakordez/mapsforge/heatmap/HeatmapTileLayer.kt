@@ -87,4 +87,9 @@ class HeatmapTileLayer(
     override fun onChange() {
         this.requestRedraw()
     }
+
+    fun heatmapChanged() {
+        tileCache.purge()
+        requestRedraw()
+    }
 }
