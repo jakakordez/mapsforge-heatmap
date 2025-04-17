@@ -25,7 +25,7 @@ class HeatmapBuilder(private val options: Options) {
          * Value of 3 for example means that each map tile will contain 8 x 8 points of the heatmap
          * (2^3 = 8).
          */
-        val levelResolution: Byte = 2,
+        val levelResolution: Byte = 3,
         /**
          * Maximal map zoom which is be accessible by the user
          */

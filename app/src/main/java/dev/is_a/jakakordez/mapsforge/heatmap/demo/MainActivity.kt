@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.SeekBar
+import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import dev.is_a.jakakordez.mapsforge.heatmap.Heatmap
@@ -20,6 +22,7 @@ import org.mapsforge.map.android.util.AndroidUtil
 import org.mapsforge.map.android.view.MapView
 import org.mapsforge.map.datastore.MapDataStore
 import org.mapsforge.map.datastore.MultiMapDataStore
+import org.mapsforge.map.layer.cache.TileCache
 import org.mapsforge.map.layer.renderer.TileRendererLayer
 import org.mapsforge.map.reader.MapFile
 import org.mapsforge.map.rendertheme.ExternalRenderTheme
@@ -28,7 +31,12 @@ import java.io.FileOutputStream
 import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
-    private lateinit var map: MapView
+    private lateinit var map: MapView;
+    private lateinit var textBlurRadius: TextView
+    private lateinit var seekBlurRadius: SeekBar
+
+    private lateinit var heatmapCache: TileCache
+    private val renderOptions = HeatmapRenderer.Options()
 
     private var points = 0
     private lateinit var heatmapLayer: HeatmapTileLayer
@@ -38,6 +46,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main_activity)
+        initializeControls()
 
         map = findViewById(R.id.mapView)
 
@@ -45,7 +54,7 @@ class MainActivity : ComponentActivity() {
 
         heatmaps.add(buildHeatmap())
 
-        val heatmapCache = AndroidUtil.createTileCache(baseContext,
+        heatmapCache = AndroidUtil.createTileCache(baseContext,
             "heatmapCache",
             map.model.displayModel.tileSize,
             1f,
@@ -57,7 +66,7 @@ class MainActivity : ComponentActivity() {
             map.model.mapViewPosition,
             AndroidGraphicFactory.INSTANCE,
             heatmaps,
-            HeatmapRenderer.Options())
+            renderOptions)
 
         map.layerManager.layers.add(heatmapLayer)
 
@@ -76,7 +85,7 @@ class MainActivity : ComponentActivity() {
         for (cluster in 0 .. 5) {
             val clusterLat = Random.nextDouble(-80.0, 80.0)
             val clusterLon = Random.nextDouble(-170.0, 170.0)
-            
+
             for (point in 0 .. 30) {
                 val lat = clusterLat + Random.nextDouble(-10.0, 10.0)
                 val lon = clusterLon + Random.nextDouble(-10.0, 10.0)
@@ -138,5 +147,24 @@ class MainActivity : ComponentActivity() {
             heatmapLayer.heatmapChanged()
             txtStats.text = "Heatmaps: ${heatmaps.size}  Points: $points"
         }
+        textBlurRadius = findViewById(R.id.textBlurRadius)
+        seekBlurRadius = findViewById(R.id.seekBlurRadius)
+        seekBlurRadius.setOnSeekBarChangeListener(object: OnSeekBarChangeListener {
+
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                textBlurRadius.text = "Level resolution: ${progress + 1}"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                seekBar?.let {
+                    renderOptions.levelResolution = (it.progress + 1).toByte()
+                    heatmapLayer.heatmapChanged()
+                }
+            }
+        })
     }
 }

@@ -1,7 +1,7 @@
 package dev.is_a.jakakordez.mapsforge.heatmap
 
+import dev.is_a.jakakordez.mapsforge.heatmap.HeatmapRenderer.Grid
 import org.mapsforge.core.model.Tile
-import kotlin.math.pow
 import kotlinx.serialization.Serializable
 
 /**
@@ -18,45 +18,24 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 class Heatmap(private val rootLayer: HeatmapNode) {
-
-    fun fillGrid(grid: Array<Array<Long>>, topLeft: Tile) {
-        fillRecursive(rootLayer, topLeft, grid)
+    fun fillGrid(grid: Grid) {
+        fillRecursive(rootLayer, grid)
     }
 
-    private fun fillRecursive(layer: HeatmapNode, topLeft: Tile, grid: Array<Array<Long>>) {
-        /*if (!areTilesRelated(tile, layer.tile)) {
-            return
-        }*/
-        if (topLeft.zoomLevel > layer.tile.zoomLevel) {
+    private fun fillRecursive(layer: HeatmapNode, grid: Grid) {
+        if (grid.topLeft.zoomLevel > layer.tile.zoomLevel) {
             for (child in layer.children) {
-                fillRecursive(child, topLeft, grid)
+                fillRecursive(child, grid)
             }
         }
         else {
             val zoom = layer.tile.zoomLevel
             val max = Tile.getMaxTileNumber(zoom) + 1
-            val x = (max + layer.tile.tileX - topLeft.tileX) % max
-            val y = layer.tile.tileY - topLeft.tileY
-            if (x in 0 ..< grid.size && y in 0 ..< grid[0].size) {
-                grid[x][y] += layer.count
+            val x = (max + layer.tile.tileX - grid.topLeft.tileX) % max
+            val y = layer.tile.tileY - grid.topLeft.tileY
+            if (x in 0 ..< grid.map.size && y in 0 ..< grid.map[0].size) {
+                grid.map[x][y] += layer.count
             }
-        }
-    }
-
-    private fun areTilesRelated(tile1: Tile, tile2: Tile): Boolean {
-        if (tile1.zoomLevel == tile2.zoomLevel) {
-            return tile1.tileX == tile2.tileX
-                    && tile1.tileY == tile2.tileY
-        }
-        else if (tile1.zoomLevel > tile2.zoomLevel) {
-            val power = 2f.pow(tile1.zoomLevel - tile2.zoomLevel).toInt()
-            return tile1.tileX / power == tile2.tileX
-                    && tile1.tileY / power == tile2.tileY
-        }
-        else {
-            val power = 2f.pow(tile2.zoomLevel - tile1.zoomLevel).toInt()
-            return tile1.tileX == tile2.tileX / power
-                    && tile1.tileY == tile2.tileY / power
         }
     }
 }
