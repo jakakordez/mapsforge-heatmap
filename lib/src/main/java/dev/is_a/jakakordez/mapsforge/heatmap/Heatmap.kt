@@ -3,6 +3,7 @@ package dev.is_a.jakakordez.mapsforge.heatmap
 import dev.is_a.jakakordez.mapsforge.heatmap.HeatmapRenderer.Grid
 import org.mapsforge.core.model.Tile
 import kotlinx.serialization.Serializable
+import org.mapsforge.core.model.BoundingBox
 
 /**
  * Heatmap class represents a single heatmap with all layers representing different levels of
@@ -36,6 +37,21 @@ class Heatmap(private val rootLayer: HeatmapNode) {
             if (x in 0 ..< grid.map.size && y in 0 ..< grid.map[0].size) {
                 grid.map[x][y] += layer.count
             }
+        }
+    }
+
+    fun getBoundingBox(zoomLevel: Byte): BoundingBox {
+        return boundingBoxRecursive(rootLayer, zoomLevel)
+    }
+
+    private fun boundingBoxRecursive(layer: HeatmapNode, zoomLevel: Byte): BoundingBox {
+        if (zoomLevel > layer.tile.zoomLevel) {
+            return layer.children
+                .map { boundingBoxRecursive(it, zoomLevel) }
+                .reduce { bb, next -> bb.extendBoundingBox(next) }
+        }
+        else {
+            return layer.tile.boundingBox
         }
     }
 }
