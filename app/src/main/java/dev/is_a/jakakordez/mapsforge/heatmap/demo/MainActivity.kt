@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
 
     private var points = 0
     private lateinit var heatmapLayer: HeatmapTileLayer
-    private val heatmaps = mutableSetOf<Heatmap>()
+    private val heatmaps = mutableMapOf<Int, Heatmap>()
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
 
         initializeMap()
 
-        heatmaps.add(buildHeatmap())
+        heatmaps.put(1, buildHeatmap())
 
         heatmapCache = AndroidUtil.createTileCache(baseContext,
             "heatmapCache",
@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
             MultiMapDataStore(),
             map.model.mapViewPosition,
             AndroidGraphicFactory.INSTANCE,
-            heatmaps,
+            heatmaps.values,
             renderOptions)
 
         map.layerManager.layers.add(heatmapLayer)
@@ -139,7 +139,7 @@ class MainActivity : ComponentActivity() {
         txtStats.text = "Heatmaps: ${heatmaps.size}  Points: $points"
 
         findViewById<Button>(R.id.btnGenerateHeatmap).setOnClickListener {
-            heatmaps.add(buildHeatmap())
+            heatmaps.put(heatmaps.size, buildHeatmap())
             heatmapLayer.heatmapChanged()
             txtStats.text = "Heatmaps: ${heatmaps.size}  Points: $points"
         }

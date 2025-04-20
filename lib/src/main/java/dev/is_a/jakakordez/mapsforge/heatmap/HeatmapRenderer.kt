@@ -22,7 +22,7 @@ class HeatmapRenderer(
     mapDataStore: MapDataStore?,
     graphicFactory: GraphicFactory?,
     tileCache: TileCache?,
-    private val heatmaps: Set<Heatmap>,
+    private val heatmaps: Collection<Heatmap>,
     private val options: Options
 ) : DatabaseRenderer(
     mapDataStore,
