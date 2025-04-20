@@ -2,6 +2,7 @@ package dev.is_a.jakakordez.mapsforge.heatmap
 
 import org.mapsforge.core.graphics.GraphicFactory
 import org.mapsforge.core.graphics.TileBitmap
+import org.mapsforge.core.model.BoundingBox
 import org.mapsforge.core.model.Tile
 import org.mapsforge.map.datastore.MapDataStore
 import org.mapsforge.map.layer.TileLayer
@@ -15,7 +16,7 @@ import org.mapsforge.map.rendertheme.rule.RenderThemeFuture
 
 class HeatmapTileLayer(
     tileCache: TileCache, private val mapDataStore: MapDataStore, mapViewPosition: MapViewPosition?,
-    private val graphicFactory: GraphicFactory, heatmaps: Set<Heatmap>,
+    private val graphicFactory: GraphicFactory, val heatmaps: Set<Heatmap>,
     options: HeatmapRenderer.Options
 ) :
     TileLayer<RendererJob>(
@@ -91,5 +92,14 @@ class HeatmapTileLayer(
     fun heatmapChanged() {
         tileCache.purge()
         requestRedraw()
+    }
+
+    fun getBoundingBox(zoomLevel: Byte): BoundingBox? {
+        if (heatmaps.isEmpty()) {
+            return null
+        }
+        return heatmaps
+            .map { it.getBoundingBox(zoomLevel) }
+            .reduce { bb, next -> bb.extendBoundingBox(next) }
     }
 }

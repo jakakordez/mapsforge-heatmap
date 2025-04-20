@@ -93,7 +93,10 @@ class MainActivity : ComponentActivity() {
                 points++
             }
         }
-        return builder.build()
+        val result = builder.build()
+        val bb = result.getBoundingBox(map.model.mapViewPosition.zoomLevel)
+        Log.i("Heatmap", "Generated heatmap with bounding box $bb")
+        return result
     }
 
     /**
