@@ -4,6 +4,8 @@ plugins {
     kotlin("plugin.serialization") version "2.1.20"
 }
 
+version = "1.1.0"
+
 android {
     namespace = "dev.is_a.jakakordez.mapsforge.heatmap"
     compileSdk = 35
